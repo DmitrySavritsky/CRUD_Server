@@ -1,25 +1,47 @@
-const service = require("../services/users.service.js");
+//const userService = require("../services/users.service.js");
+const dbService = require("../services/users.dbservice.js");
 
 class UsersController{
-    get(req,res,next){
-       res
-        .status(200)
-        .send(service.getUsers());
+    async get(req,res,next){
+
+        try{
+            res
+            .status(200)
+            .send(await dbService.getUsers());
+        }
+        catch(err){
+            res.status(500).send(err);
+        }
     }
-    post(req,res,next){
-        res
-        .status(201)
-        .send(service.addUser(req.body));
+    async post(req,res,next){
+        try{
+            res
+            .status(201)
+            .send(await dbService.addUser(req.body));
+        }
+        catch(err){
+            res.status(500).send(err);
+        }
     }
-    put(req,res,next){
-        res
-        .status(201)
-        .send(service.changeUser(req.params.id,req.body));
+    async put(req,res,next){
+        try{
+            res
+            .status(201)
+            .send(await dbService.changeUser(req.params.id,req.body));
+        }
+        catch(err){
+            res.status(500).send(err);
+        }
     }
-    delete(req,res,next){
-        res
-        .status(201)
-        .send(service.deleteUser(req.params.id));
+    async delete(req,res,next){
+        try{
+            res
+            .status(201)
+            .send(await dbService.deleteUser(req.params.id));
+        }
+        catch(err){
+            res.status(500).send(err);
+        }
     }
 }
 
