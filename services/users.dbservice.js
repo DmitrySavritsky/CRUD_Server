@@ -1,4 +1,3 @@
-const uuid = require("uuid");
 const mongoose = require('mongoose');
 const connectionString = "mongodb://localhost:27017/users";
 
@@ -15,7 +14,6 @@ class dbService{
 
     async addUser(user){
         const addedUser = new this.User();
-        addedUser._id = uuid.v4();
         addedUser.name = user.name;
         await addedUser.save();
         return "User added successfully!";
@@ -34,10 +32,6 @@ class dbService{
     initializeDatabase(connectionString){
         mongoose.connect(connectionString, {useNewUrlParser: true, useUnifiedTopology: true});
         const userSchema = mongoose.Schema({
-            _id: {
-                type: String,
-                required: true,
-              },
             name: {
                 type: String,
                 required: true,
