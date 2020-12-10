@@ -22,8 +22,7 @@ class dbService{
     async login(login, password){
 
         const user = await this.findUser(login);
-        const isMatch = await checkPassword(password, user.password);
-        console.log(isMatch);
+        const isMatch = await checkPassword(password, user[0].password);
 
         if(!isMatch){
             throw new Error("Password mismatch!");
