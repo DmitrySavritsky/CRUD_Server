@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
 const mongoose = require('mongoose');
+const fs = require("fs");
 const connectionString = "mongodb://localhost:27017/users";
 
 async function createHash(password){
@@ -22,7 +23,7 @@ class dbService{
     async login(login, password){
 
         const user = await this.findUser(login);
-        const isMatch = await checkPassword(password, user[0].password);
+        const isMatch = await checkPassword(password, user.password);
 
         if(!isMatch){
             throw new Error("Password mismatch!");
@@ -41,33 +42,62 @@ class dbService{
         const addedUser = new this.User();
         addedUser.name = user.name;
         addedUser.password = await createHash(user.password);
+        addedUser.avatar = user.avatarPath;
         await addedUser.save();
         return "User added successfully!";
     }
 
     async findUser(login){
-       return await this.User.find({name : login});
+       return await this.User.findOne({name : login});
     }
 
     async changeUser(id,user){
-       await this.User.updateOne({_id : id},{name : user.name});
-       return "User changed successfully!";
+        const oldUser = await this.User.findOne({_id : id});
+        const imagePath = oldUser.avatar;
+        
+        await this.deleteImage(imagePath);
+        await this.User.updateOne({_id : id},
+                                    {
+                                    name : user.name,
+                                    password : await createHash(user.password),
+                                    avatar: user.avatarPath
+                                    }
+                                 );
+        return "User changed successfully!";
     }
 
     async deleteUser(id){
+       const user = await this.User.findOne({_id : id});
+       const imagePath = user.avatar;
+
+       await this.deleteImage(imagePath);
        await this.User.deleteOne({_id : id});
        return "User deleted successfully!";
     }
 
+    async deleteImage(path){
+       console.log("delete image called " + path);
+       await fs.unlink(path,(err) => {
+        if (err) {
+          console.error(err)
+          return;
+        }
+      })
+    }
+
     initializeDatabase(connectionString){
-        mongoose.connect(connectionString, {useNewUrlParser: true, useUnifiedTopology: true});
+        mongoose.connect(connectionString, {useNewUrlParser: true, useUnifiedTopology: true,  useCreateIndex: true});
         const userSchema = mongoose.Schema({
             name: {
                 type: String,
                 required: true,
-                dropDups: true
+                unique: true
             },
             password:{
+                type: String,
+                required: true
+            },
+            avatar:{
                 type: String,
                 required: true
             }

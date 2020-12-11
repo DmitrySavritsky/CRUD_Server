@@ -14,6 +14,8 @@ class UsersController{
     }
     async post(req,res,next){
         try{
+            req.body.avatarPath = req.file.path;
+
             res
             .status(201)
             .send(await dbService.addUser(req.body));
@@ -24,6 +26,8 @@ class UsersController{
     }
     async put(req,res,next){
         try{
+            req.body.avatarPath = req.file.path;
+
             res
             .status(201)
             .send(await dbService.changeUser(req.params.id,req.body));
