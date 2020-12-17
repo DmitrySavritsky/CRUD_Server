@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const fs = require("fs");
 const photoSchema = require("../models/photo.model.js");
 
@@ -24,7 +23,8 @@ class dbService{
     }
 
     async updatePhoto(id, photo){
-        const oldPhoto = await this.Photo.findOne({_id : id});        
+        const oldPhoto = await this.Photo.findOne({_id : id});  
+        if(oldPhoto === null || oldPhoto === undefined) return "Photo not found!";      
         this.deleteImage(oldPhoto.filepath);
         await this.Photo.updateOne({_id : id},
               {
@@ -35,8 +35,12 @@ class dbService{
 
     async deletePhoto(id){
         const photo = await this.findPhoto(id);
+
+        if(photo === null || photo === undefined) return "User not found!";
+
         this.deleteImage(photo.filepath);
         await this.Photo.deleteOne({_id : id});
+        return "Photo deleted successfully!";
     }
 
     async deleteImage(path){
@@ -49,7 +53,7 @@ class dbService{
     }
 
     initializeDatabase(){
-        this.Photo = mongoose.model('Photo', photoSchema);
+        this.Photo = photoSchema;
     }
 }
 
