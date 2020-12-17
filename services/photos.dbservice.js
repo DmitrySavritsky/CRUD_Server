@@ -25,14 +25,12 @@ class dbService{
 
     async updatePhoto(id, photo){
         const oldPhoto = await this.Photo.findOne({_id : id});        
-        await this.deleteImage(oldPhoto.filepath);
+        this.deleteImage(oldPhoto.filepath);
         await this.Photo.updateOne({_id : id},
               {
-                name : photo.name,
-                filepath: photo.filepath,
-                user_id: photo.user_id
+                ...photo
               });
-        return "User changed successfully!";
+        return "Photo changed successfully!";
     }
 
     async deletePhoto(id){

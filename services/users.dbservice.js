@@ -43,13 +43,11 @@ class dbService{
     }
 
     async addUser(user){
-        let addedUser = new this.User();
-
-        addedUser = {...addedUser,
-                     password : await createHash(user.password),
-                     name: user.name,
-                     avatar: user.avatarPath
-                    }
+        const addedUser = new this.User({
+            ...user,
+            password: await createHash(user.password),
+            avatar: user.avatarPath
+        });
 
         await addedUser.save();
         return "User added successfully!";
@@ -66,9 +64,9 @@ class dbService{
         this.deleteImage(imagePath);
         await this.User.updateOne({_id : id},
                                     {
-                                    name : user.name,
-                                    password : await createHash(user.password),
-                                    avatar: user.avatarPath
+                                        ...user,
+                                        password: await createHash(user.password),
+                                        avatar: user.avatarPath
                                     }
                                  );
         return "User changed successfully!";
