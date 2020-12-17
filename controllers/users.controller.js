@@ -66,6 +66,15 @@ class UsersController{
             res.status(403).send(err.message);
         }
     }
+
+    async getUserById(req, res, next) {
+        try{
+            res.status(200).send(await dbService.getUserById(req.params.id));
+        }
+        catch(err){
+            res.status(403).send(err.message);
+        }
+    }
 }
 
 module.exports = new UsersController();

@@ -2,7 +2,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
 const mongoose = require('mongoose');
 const fs = require("fs");
-const connectionString = "mongodb://localhost:27017/users";
+
+const userSchema = require("../models/user.model.js");
 
 async function createHash(password){
     const saltRounds = 10;
@@ -17,12 +18,15 @@ class dbService{
     User = null;
 
     constructor(){
-        this.initializeDatabase(connectionString);
+        this.initializeDatabase();
     }
 
     async login(login, password){
 
         const user = await this.findUser(login);
+        if( user === undefined){
+            throw new Error("User not found!");
+        }
         const isMatch = await checkPassword(password, user.password);
 
         if(!isMatch){
@@ -39,10 +43,14 @@ class dbService{
     }
 
     async addUser(user){
-        const addedUser = new this.User();
-        addedUser.name = user.name;
-        addedUser.password = await createHash(user.password);
-        addedUser.avatar = user.avatarPath;
+        let addedUser = new this.User();
+
+        addedUser = {...addedUser,
+                     password : await createHash(user.password),
+                     name: user.name,
+                     avatar: user.avatarPath
+                    }
+
         await addedUser.save();
         return "User added successfully!";
     }
@@ -55,7 +63,7 @@ class dbService{
         const oldUser = await this.User.findOne({_id : id});
         const imagePath = oldUser.avatar;
         
-        await this.deleteImage(imagePath);
+        this.deleteImage(imagePath);
         await this.User.updateOne({_id : id},
                                     {
                                     name : user.name,
@@ -70,13 +78,12 @@ class dbService{
        const user = await this.User.findOne({_id : id});
        const imagePath = user.avatar;
 
-       await this.deleteImage(imagePath);
+       this.deleteImage(imagePath);
        await this.User.deleteOne({_id : id});
        return "User deleted successfully!";
     }
 
     async deleteImage(path){
-       console.log("delete image called " + path);
        await fs.unlink(path,(err) => {
         if (err) {
           console.error(err)
@@ -85,23 +92,17 @@ class dbService{
       })
     }
 
-    initializeDatabase(connectionString){
-        mongoose.connect(connectionString, {useNewUrlParser: true, useUnifiedTopology: true,  useCreateIndex: true});
-        const userSchema = mongoose.Schema({
-            name: {
-                type: String,
-                required: true,
-                unique: true
-            },
-            password:{
-                type: String,
-                required: true
-            },
-            avatar:{
-                type: String,
-                required: true
-            }
-        });
+    async getUserById(id){
+        return await this.User
+            .findOne({_id : id})
+            .populate("photos")
+            .exec(function (err, photo) {
+                if (err) return handleError(err);
+                return photo;
+            });
+    }
+
+    initializeDatabase(){
         this.User = mongoose.model('User', userSchema);
     }
 }
