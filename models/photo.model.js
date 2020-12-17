@@ -1,16 +1,22 @@
 const mongoose = require('mongoose');
+const referrenceValidator = require('mongoose-referrence-validator');
 
 const photoSchema = mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true
     },
     filepath:{
         type: String,
         required: true,
     },
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    user_id: { 
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User'
+    }
 });
 
-module.exports = photoSchema;
+photoSchema.plugin(referrenceValidator);
+
+module.exports =  mongoose.model('Photo',photoSchema);

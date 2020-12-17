@@ -14,7 +14,6 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true
     },
-    photos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Photo' }]
 });
 
-module.exports = userSchema;
+module.exports =  mongoose.model('User', userSchema);
