@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require("bcrypt");
-const mongoose = require('mongoose');
 const fs = require("fs");
+const mongoose = require('mongoose');
 
 const userSchema = require("../models/user.model.js");
 
@@ -24,7 +24,7 @@ class dbService{
     async login(login, password){
 
         const user = await this.findUser(login);
-        if( user === undefined){
+        if(user === undefined || user === null){
             throw new Error("User not found!");
         }
         const isMatch = await checkPassword(password, user.password);
@@ -38,8 +38,18 @@ class dbService{
         }
     }
 
-    async getUsers(){
-       return await this.User.find({});
+    async getUsers(page,count){
+       if(page === undefined || count === undefined){
+            return await this.User.find({});
+       }
+       else{
+            return {
+                content: [await this.User.find({}).skip(page*count).limit(+count)],
+                page: +page,
+                count: +count,
+                totalCount : await this.User.countDocuments({})
+            }
+       }
     }
 
     async addUser(user){
@@ -59,6 +69,7 @@ class dbService{
 
     async changeUser(id,user){
         const oldUser = await this.User.findOne({_id : id});
+        if(oldUser === null || oldUser === undefined) return "User not found!";
         const imagePath = oldUser.avatar;
         
         this.deleteImage(imagePath);
@@ -74,6 +85,7 @@ class dbService{
 
     async deleteUser(id){
        const user = await this.User.findOne({_id : id});
+       if(user === null || user === undefined) return "User not found!";
        const imagePath = user.avatar;
 
        this.deleteImage(imagePath);
@@ -81,8 +93,8 @@ class dbService{
        return "User deleted successfully!";
     }
 
-    async deleteImage(path){
-       await fs.unlink(path,(err) => {
+    deleteImage(path){
+       fs.unlink(path,(err) => {
         if (err) {
           console.error(err)
           return;
@@ -91,17 +103,25 @@ class dbService{
     }
 
     async getUserById(id){
-        return await this.User
-            .findOne({_id : id})
-            .populate("photos")
-            .exec(function (err, photo) {
-                if (err) return handleError(err);
-                return photo;
-            });
+        return await this.User.aggregate([
+                            {
+                                $match: {
+                                "_id" : new mongoose.Types.ObjectId(id)
+                                }
+                            },
+                            {
+                                $lookup: {
+                                    from: "photos",
+                                    localField: "_id",
+                                    foreignField: "user_id",
+                                    as: "photos"
+                                }
+                            }
+                    ]);
     }
 
     initializeDatabase(){
-        this.User = mongoose.model('User', userSchema);
+        this.User = userSchema;
     }
 }
 

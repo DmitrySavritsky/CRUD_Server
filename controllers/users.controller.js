@@ -6,7 +6,7 @@ class UsersController{
         try{
             res
             .status(200)
-            .send(await dbService.getUsers());
+            .send(await dbService.getUsers(req.query.page, req.query.count));
         }
         catch(err){
             res.status(500).send(err.message);
