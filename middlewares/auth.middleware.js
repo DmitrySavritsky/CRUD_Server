@@ -1,9 +1,13 @@
 const jwt = require('jsonwebtoken');
 
-async function userExists(login){
+async function userExists(login, request){
     const userSchema = require("../models/user.model.js");
     const user = await userSchema.findOne({name : login});
-    return (user !== null && user !== undefined); 
+    if(user !== null && user !== undefined){
+        request.user = user;
+        return true;
+    }
+    else return false;
 }
 
 const auth = async function (req,res,next){
@@ -12,7 +16,7 @@ const auth = async function (req,res,next){
         const result = jwt.verify(token, "veryStrongSecretKey");
         req.login = result.login;
 
-        const isExists = await userExists(result.login);
+        const isExists = await userExists(result.login, req);
         if(!isExists){
             throw new Error("User not exists!");
         }
